@@ -20,3 +20,15 @@ model User {
   lastname String?
   password String?
 }
+
+model Reservation {
+  id    Int     @default(autoincrement()) @id
+  userId String?
+  movieId String?
+  movieName String?
+  date DateTime
+  createAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @Relation(fields: [userId], references: [id], onDelete: Cascade)
+}

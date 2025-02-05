@@ -1,8 +1,16 @@
-import { IsString, IsDate, IsOptional } from 'class-validator';
+import { IsString, IsDate, IsOptional,IsInt } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateReservationDto {
+    @ApiProperty({ example:12345, description: 'Id of the user' })
+    @IsInt()
+    userId: number
+
+    @ApiProperty({ example:345, description: 'Id of the movie' })
+    @IsInt()
+    movieId: number
+
     @ApiProperty({ example: 'Sonic 4', description: 'Title of the movie' })
     @IsString()
     movieName: string;

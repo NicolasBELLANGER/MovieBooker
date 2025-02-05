@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { MovieResultDTO } from './dto/movie.dto';
 
 @Injectable()
 export class MovieService {

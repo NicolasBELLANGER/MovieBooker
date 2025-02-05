@@ -9,11 +9,15 @@ async function bootstrap() {
     .setTitle('Movie Booker')
     .setDescription('Movie Booker Documentation')
     .setVersion('1.0')
+    .addBearerAuth({
+      type: 'http',
+      scheme: 'bearer',
+      in: 'header',
+    })
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);
-
   await app.listen(process.env.PORT ?? 3000);
 }
 bootstrap();

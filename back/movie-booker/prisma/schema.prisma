@@ -1,0 +1,26 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = "postgresql://root:jniwXJtPNXf9Il73TS1lpfsdJqv80VP0@dpg-cugtr2jtq21c73f40ebg-a.frankfurt-postgres.render.com/moviebooker_w6fu"
+}
+
+model User {
+  id    Int     @default(autoincrement()) @id
+  email String  @unique
+  firstname  String?
+  lastname String?
+  password String?
+}
+
+model Reservation {
+  id    Int     @default(autoincrement()) @id
+  userId Int
+  movieId Int
+  movieName String?
+  date DateTime
+  createAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

@@ -29,12 +29,4 @@ export class ReservationController {
     async getReservationById(@Param('id') id: string) {
         return this.reservationService.getReservationById(parseInt(id, 10));
     }
-
-
-    @UseGuards(AuthGuard)
-    @Get('user/:userId')
-    @ApiBearerAuth()
-    async getReservationByUserId(@Param('userId') userId: number) {
-        return this.reservationService.getReservationByUserId(userId);
-    }
 }

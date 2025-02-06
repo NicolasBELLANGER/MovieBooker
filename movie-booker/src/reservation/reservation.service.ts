@@ -52,24 +52,5 @@ export class ReservationService {
             throw new BadRequestException('Impossible to found reservation')
         }
     }
-
-    async getReservationByUserId(userId: number){
-        if(!userId){
-            throw new BadRequestException('UserId is required')
-        }
-        const reservations = await this.prisma.reservation.findMany({
-            where: {
-                userId: userId,
-            },
-            orderBy: {
-                date: 'asc',
-            },
-        });
-        if (!reservations.length) {
-            throw new BadRequestException('Aucune réservation trouvée pour cet utilisateur.');
-        }
-
-        return reservations;
-    }
 }
 

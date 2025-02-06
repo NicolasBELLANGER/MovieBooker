@@ -1,6 +1,6 @@
 import { Controller, Get, Query, Param, UseGuards } from '@nestjs/common';
 import { MovieService } from './movie.service';
-import { AuthGuard } from 'src/auth/auth.gard';
+import { AuthGuard } from '../auth/auth.guard';
 import { ApiBearerAuth } from '@nestjs/swagger';
 
 @Controller('movie')

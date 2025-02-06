@@ -3,7 +3,7 @@ import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateReservationDto {
-    @ApiProperty({ example:12345, description: 'Id of the user' })
+    @ApiProperty({ example:3, description: 'Id of the user' })
     @IsInt()
     userId: number
 

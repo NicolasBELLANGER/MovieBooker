@@ -8,7 +8,9 @@ export class ReservationService {
 
     async createReservation(data: CreateReservationDto) {
         const lastReservation = await this.prisma.reservation.findFirst({
-            where: {},
+            where: {
+                userId: data.userId,
+            },
             orderBy: {
                 date: 'desc',
             },
@@ -23,8 +25,51 @@ export class ReservationService {
             }
         }
         return this.prisma.reservation.create({
-            data,
+            data
        })
-      }
+    }
+
+    async getAllReservation(){
+        return this.prisma.reservation.findMany();
+    }
+
+    async getReservationById(reservationId : number){
+        if(!reservationId){
+            throw new BadRequestException('ReservationId is required')
+        }
+        try{
+            const reservation = await this.prisma.reservation.findUnique({
+                where : {
+                    id: reservationId
+                },
+            })
+            if(!reservation){
+                throw new BadRequestException('Not found')
+            }
+            return reservation
+        }
+        catch{
+            throw new BadRequestException('Impossible to found reservation')
+        }
+    }
+
+    async getReservationByUserId(userId: number){
+        if(!userId){
+            throw new BadRequestException('UserId is required')
+        }
+        const reservations = await this.prisma.reservation.findMany({
+            where: {
+                userId: userId,
+            },
+            orderBy: {
+                date: 'asc',
+            },
+        });
+        if (!reservations.length) {
+            throw new BadRequestException('Aucune réservation trouvée pour cet utilisateur.');
+        }
+
+        return reservations;
+    }
 }
 

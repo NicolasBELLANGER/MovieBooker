@@ -1,6 +1,6 @@
-import { Controller, Post, Body, UseGuards} from '@nestjs/common';
+import { Controller, Post, Get, Param, Body, Req, UseGuards} from '@nestjs/common';
 import { ReservationService } from './reservation.service';
-import { AuthGuard } from 'src/auth/auth.gard';
+import { AuthGuard } from '../auth/auth.guard';
 import { ApiBearerAuth } from '@nestjs/swagger';
 import { CreateReservationDto } from './dto/reservation.dto';
 
@@ -9,9 +9,32 @@ export class ReservationController {
     constructor( private readonly reservationService : ReservationService) {}
 
     @UseGuards(AuthGuard)
-        @Post()
-        @ApiBearerAuth()
-        async createReservation(@Body()data:CreateReservationDto) {
-            return this.reservationService.createReservation(data);
-        }
+    @Post()
+    @ApiBearerAuth()
+    async createReservation( @Body() data:CreateReservationDto) {
+      
+        return this.reservationService.createReservation(data);
+    }
+
+    @UseGuards(AuthGuard)
+    @Get()
+    @ApiBearerAuth()
+    async getAllReservation(){
+        return this.reservationService.getAllReservation()
+    }
+
+    @UseGuards(AuthGuard)
+    @Get(':id')
+    @ApiBearerAuth()
+    async getReservationById(@Param('id') id: string) {
+        return this.reservationService.getReservationById(parseInt(id, 10));
+    }
+
+
+    @UseGuards(AuthGuard)
+    @Get('user/:userId')
+    @ApiBearerAuth()
+    async getReservationByUserId(@Param('userId') userId: number) {
+        return this.reservationService.getReservationByUserId(userId);
+    }
 }

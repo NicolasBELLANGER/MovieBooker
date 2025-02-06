@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-
+import "./Register.css"
 const Register = () => {
   const [firstname, setFirstname] = useState("");
   const [lastname, setLastname] = useState("");
@@ -30,7 +30,7 @@ const Register = () => {
   };
 
   return (
-    <div className="container">
+    <div className="register-container">
       <h2>Inscription</h2>
       <form onSubmit={handleSubmit}>
         <input type="text" placeholder="Prénom" value={firstname} onChange={(e) => setFirstname(e.target.value)} required />

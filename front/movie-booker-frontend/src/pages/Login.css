@@ -1,0 +1,56 @@
+body {
+    background-color: rgb(26, 32, 46);
+}
+
+.login-container {
+    position: absolute;
+    width: 30%;
+    background-color: rgb(38, 52, 73);
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    border-radius: 10px;
+    font-family: Arial;
+}
+h2 {
+    text-align: center;
+    color: white;
+}
+form {
+    display: grid;
+}
+form input {
+    width: 80%;
+    height: 40px;
+    margin: 10px auto;
+    border: none;
+    outline: none;
+    border-radius: 10px;
+    padding-left: 20px;
+}
+.login-container button {
+    width: 40%;
+    margin: 25px auto;
+    height: 40px;
+    border: none;
+    background-color: #cc7b19;
+    border-radius: 10px;
+}
+p {
+    color: white;
+    margin-left: 20px;
+}
+a {
+    color: white;
+}
+
+@media screen and (max-width: 1024px) {
+    .login-container {
+        width: 50%;
+    }
+}
+@media screen and (max-width: 635px) {
+    .login-container {
+        width: 90%;
+    }
+}

@@ -1,4 +1,4 @@
-import { Controller, Post, Body } from '@nestjs/common';
+import { Controller, Post, Body, HttpCode } from '@nestjs/common';
 import { RegisterDto } from './dto/register.dto';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
@@ -19,6 +19,7 @@ export class AuthController {
         @ApiOperation({ summary: 'Connexion utilisateur' })
         @ApiResponse({ status: 200, description: 'Connexion réussie et token généré' })
         @Post('login')
+        @HttpCode(200)
         login(@Body() loginDto: LoginDto){
             return this.authService.loginUser(loginDto);
         }

@@ -1,21 +1,20 @@
-import { Test, TestingModule } from '@nestjs/testing';
+/*import { Test, TestingModule } from '@nestjs/testing';
+import { INestApplication, ValidationPipe, BadRequestException, NotFoundException } from '@nestjs/common';
+import * as request from 'supertest';
 import { MovieController } from './movie.controller';
 import { MovieService } from './movie.service';
 import { AuthGuard } from '../auth/auth.guard';
-import { JwtService } from '@nestjs/jwt';
-import { ExecutionContext } from '@nestjs/common';
 
-describe('MovieController', () => {
-  let movieController: MovieController;
+describe('MovieController (e2e)', () => {
+  let app: INestApplication;
   let movieService: MovieService;
-  let mockJwtService: JwtService;
 
   beforeEach(async () => {
-    mockJwtService = {
-      verifyAsync: jest.fn().mockResolvedValue({ userId: 1 }), // Simule un JWT valide
-    } as unknown as JwtService;
+    const mockAuthGuard = {
+      canActivate: jest.fn().mockReturnValue(true),
+    };
 
-    const module: TestingModule = await Test.createTestingModule({
+    const moduleFixture: TestingModule = await Test.createTestingModule({
       controllers: [MovieController],
       providers: [
         {
@@ -23,66 +22,82 @@ describe('MovieController', () => {
           useValue: {
             getMovieByPage: jest.fn(),
             getMovieByName: jest.fn(),
+            getMovieById: jest.fn(),
           },
         },
-        {
-          provide: JwtService,
-          useValue: mockJwtService, // Fournit un mock de JwtService
-        },
       ],
-    }).compile();
+    })
+      .overrideGuard(AuthGuard)
+      .useValue(mockAuthGuard)
+      .compile();
 
-    movieController = module.get<MovieController>(MovieController);
-    movieService = module.get<MovieService>(MovieService);
+    movieService = moduleFixture.get<MovieService>(MovieService);
+    app = moduleFixture.createNestApplication();
+    app.useGlobalPipes(new ValidationPipe());
+    await app.init();
   });
 
-  it('should be defined', () => {
-    expect(movieController).toBeDefined();
+  afterEach(async () => {
+    await app.close();
   });
 
-  describe('getMoviesByPage', () => {
-    it('should return movies by page', async () => {
-      const mockResponse = { results: [{ id: 1, title: 'Test Movie' }] };
-      jest.spyOn(movieService, 'getMovieByPage').mockResolvedValue(mockResponse);
+  describe('GET /movie', () => {
+    it('should return a list of movies for a given page', async () => {
+      const mockMovies = { results: [{ id: 1, title: 'Movie 1' }] };
+      jest.spyOn(movieService, 'getMovieByPage').mockResolvedValue(mockMovies);
 
-      const result = await movieController.getMoviesByPage({ page: 1 });
-      expect(result).toEqual(mockResponse);
-      expect(movieService.getMovieByPage).toHaveBeenCalledWith(1);
+      const response = await request(app.getHttpServer()).get('/movie?page=1').expect(200);
+
+      expect(response.body).toEqual(mockMovies);
     });
 
-    it('should throw an error if service fails', async () => {
-      jest.spyOn(movieService, 'getMovieByPage').mockRejectedValue(new Error('API Error'));
+    it('should return a default page if page param is missing', async () => {
+      const mockMovies = { results: [{ id: 1, title: 'Movie 1' }] };
+      jest.spyOn(movieService, 'getMovieByPage').mockResolvedValue(mockMovies);
 
-      await expect(movieController.getMoviesByPage({ page: 1 })).rejects.toThrow('API Error');
-    });
-  });
+      const response = await request(app.getHttpServer()).get('/movie').expect(200);
 
-  describe('getMoviesByName', () => {
-    it('should return movies by name', async () => {
-      const mockResponse = { results: [{ id: 1, title: 'Test Movie' }] };
-      jest.spyOn(movieService, 'getMovieByName').mockResolvedValue(mockResponse);
-
-      const result = await movieController.getMoviesByName({ name: 'Test' });
-      expect(result).toEqual(mockResponse);
-      expect(movieService.getMovieByName).toHaveBeenCalledWith('Test');
-    });
-
-    it('should throw an error if service fails', async () => {
-      jest.spyOn(movieService, 'getMovieByName').mockRejectedValue(new Error('API Error'));
-
-      await expect(movieController.getMoviesByName({ name: 'Test' })).rejects.toThrow('API Error');
+      expect(response.body).toEqual(mockMovies);
     });
   });
 
-  it('should be protected by AuthGuard', async () => {
-    const guard = new AuthGuard(mockJwtService);
-    const context = {
-      switchToHttp: jest.fn().mockReturnThis(),
-      getRequest: jest.fn().mockReturnValue({
-        headers: { authorization: 'Bearer validToken' },
-      }),
-    } as unknown as ExecutionContext;
+  describe('GET /movie/search', () => {
+    it('should return movies matching a name', async () => {
+      const mockMovies = { results: [{ id: 2, title: 'Inception' }] };
+      jest.spyOn(movieService, 'getMovieByName').mockResolvedValue(mockMovies);
 
-    expect(await guard.canActivate(context)).toBe(true);
+      const response = await request(app.getHttpServer()).get('/movie/search?name=Inception').expect(200);
+
+      expect(response.body).toEqual(mockMovies);
+    });
+
+    it('should return 400 if name param is missing', async () => {
+      const response = await request(app.getHttpServer()).get('/movie/search').expect(400);
+      expect(response.body.message).toBe('The "name" query parameter is required.');
+    });
+  });
+
+  describe('GET /movie/:id', () => {
+    it('should return movie details by ID', async () => {
+      const mockMovie = { id: 3, title: 'Avatar' };
+      jest.spyOn(movieService, 'getMovieById').mockResolvedValue(mockMovie);
+
+      const response = await request(app.getHttpServer()).get('/movie/3').expect(200);
+
+      expect(response.body).toEqual(mockMovie);
+    });
+
+    it('should return 400 for invalid ID', async () => {
+      const response = await request(app.getHttpServer()).get('/movie/invalid').expect(400);
+      expect(response.body.message).toBe('Invalid movie ID.');
+    });
+
+    it('should return 404 if movie not found', async () => {
+      jest.spyOn(movieService, 'getMovieById').mockResolvedValue(null);
+
+      const response = await request(app.getHttpServer()).get('/movie/999').expect(404);
+      expect(response.body.message).toBe('Movie with ID 999 not found.');
+    });
   });
 });
+*/

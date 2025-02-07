@@ -1,9 +1,11 @@
+import { BadGatewayException, UnauthorizedException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { AuthService } from './auth.service';
 import { PrismaService } from '../prisma.service';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
-import { BadGatewayException, UnauthorizedException } from '@nestjs/common';
+import { RegisterDto } from './dto/register.dto';
+import { LoginDto } from './dto/login.dto';
 
 describe('AuthService', () => {
   let authService: AuthService;
@@ -26,7 +28,7 @@ describe('AuthService', () => {
         {
           provide: JwtService,
           useValue: {
-            signAsync: jest.fn().mockResolvedValue('test-token'),
+            signAsync: jest.fn(),
           },
         },
       ],
@@ -37,62 +39,132 @@ describe('AuthService', () => {
     jwtService = module.get<JwtService>(JwtService);
   });
 
-  it('should hash password correctly', async () => {
-    const password = 'password123';
-    const hash = await authService.hashPassword(password);
-    expect(await bcrypt.compare(password, hash)).toBeTruthy();
+  it('should be defined', () => {
+    expect(authService).toBeDefined();
   });
 
-  it('should create a user successfully', async () => {
-    const userData = {
-      email: 'test@example.com',
-      password: 'password123',
-      firstname: 'John',
-      lastname: 'Doe',
-    };
-
-    prismaService.user.findUnique = jest.fn().mockResolvedValue(null);
-    prismaService.user.create = jest.fn().mockResolvedValue(userData);
-
-    const user = await authService.createUser(userData);
-    expect(user).toEqual(userData);
+  describe('hashPassword', () => {
+    it('should return a hashed password', async () => {
+      const password = 'password123';
+      const hashedPassword = await authService.hashPassword(password);
+      expect(hashedPassword).not.toEqual(password);
+      expect(await bcrypt.compare(password, hashedPassword)).toBe(true);
+    });
   });
 
-  it('should throw error if email already exists', async () => {
-    prismaService.user.findUnique = jest.fn().mockResolvedValue({ id: 1, email: 'test@example.com' });
+  describe('createUser', () => {
+    it('should create a new user when email does not exist', async () => {
+      const registerDto: RegisterDto = {
+        firstname: 'Nicolas',
+        lastname: 'Dupont',
+        email: 'test@example.com',
+        password: 'password123',
+      };
 
-    await expect(authService.createUser({ email: 'test@example.com', password: 'password123' }))
-      .rejects
-      .toThrow(BadGatewayException);
+      const createdUser = {
+        id: 1,
+        ...registerDto,
+      };
+
+      jest.spyOn(prismaService.user, 'findUnique').mockResolvedValue(null);
+      jest.spyOn(prismaService.user, 'create').mockResolvedValue(createdUser);
+
+      const result = await authService.createUser(registerDto);
+      expect(result).toEqual(createdUser);
+    });
+
+    it('should throw BadGatewayException if email already exists', async () => {
+      const registerDto: RegisterDto = {
+        firstname: 'Nicolas',
+        lastname: 'Dupont',
+        email: 'test@example.com',
+        password: 'password123',
+      };
+
+      const existingUser = {
+        id: 1,
+        ...registerDto,
+      };
+
+      jest.spyOn(prismaService.user, 'findUnique').mockResolvedValue(existingUser);
+
+      await expect(authService.createUser(registerDto)).rejects.toThrow(BadGatewayException);
+    });
   });
 
-  it('should validate password correctly', async () => {
-    const password = 'password123';
-    const hash = await bcrypt.hash(password, 10);
-    expect(await authService.decryptPassword(password, hash)).toBeTruthy();
+  describe('decryptPassword', () => {
+    it('should return true for correct password', async () => {
+      const password = 'password123';
+      const hashedPassword = await bcrypt.hash(password, 10);
+      expect(await authService.decryptPassword(password, hashedPassword)).toBe(true);
+    });
+
+    it('should return false for incorrect password', async () => {
+      const password = 'password123';
+      const hashedPassword = await bcrypt.hash('wrongpassword', 10);
+      expect(await authService.decryptPassword(password, hashedPassword)).toBe(false);
+    });
   });
 
-  it('should throw UnauthorizedException if login credentials are incorrect', async () => {
-    prismaService.user.findUnique = jest.fn().mockResolvedValue(null);
+  describe('loginUser', () => {
+    it('should return a token when credentials are valid', async () => {
+      const loginDto: LoginDto = {
+        email: 'test@example.com',
+        password: 'password123',
+      };
 
-    await expect(authService.loginUser({ email: 'wrong@example.com', password: 'wrongpass' }))
-      .rejects
-      .toThrow(UnauthorizedException);
-  });
+      const user = {
+        id: 1,
+        email: loginDto.email,
+        firstname: 'Nicolas',
+        lastname: 'Dupont',
+        password: await bcrypt.hash(loginDto.password, 10),
+      };
 
-  it('should return a valid JWT token when logging in', async () => {
-    const user = {
-      id: 1,
-      email: 'test@example.com',
-      password: await bcrypt.hash('password123', 10),
-    };
+      const token = 'mocked-jwt-token';
 
-    prismaService.user.findUnique = jest.fn().mockResolvedValue(user);
+      jest.spyOn(prismaService.user, 'findUnique').mockResolvedValue(user);
+      jest.spyOn(authService, 'decryptPassword').mockResolvedValue(true);
+      jest.spyOn(jwtService, 'signAsync').mockResolvedValue(token);
 
-    const result = await authService.loginUser({ email: 'test@example.com', password: 'password123' });
-    expect(result).toEqual({
-      message: 'Vous êtes connecté avec succès',
-      token: 'test-token',
+      const result = await authService.loginUser(loginDto);
+
+      expect(result).toEqual({ message: 'Vous êtes connecté avec succès', token });
+    });
+
+    it('should throw UnauthorizedException if user not found', async () => {
+      const loginDto: LoginDto = {
+        email: 'test@example.com',
+        password: 'password123',
+      };
+
+      jest.spyOn(prismaService.user, 'findUnique').mockResolvedValue(null);
+
+      await expect(authService.loginUser(loginDto))
+        .rejects
+        .toThrow(UnauthorizedException);
+    });
+
+    it('should throw UnauthorizedException if password is incorrect', async () => {
+      const loginDto: LoginDto = {
+        email: 'test@example.com',
+        password: 'wrongpassword',
+      };
+
+      const user = {
+        id: 1,
+        email: loginDto.email,
+        firstname: 'Nicolas',
+        lastname: 'Dupont',
+        password: await bcrypt.hash('password123', 10),
+      };
+
+      jest.spyOn(prismaService.user, 'findUnique').mockResolvedValue(user);
+      jest.spyOn(authService, 'decryptPassword').mockResolvedValue(false);
+
+      await expect(authService.loginUser(loginDto))
+        .rejects
+        .toThrow(UnauthorizedException);
     });
   });
 });

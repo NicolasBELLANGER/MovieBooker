@@ -1,0 +1,85 @@
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #263449;
+    padding: 15px 20px;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+  }
+  
+  .nav-left,
+  .nav-right {
+    display: flex;
+    align-items: center;
+  }
+  
+  .navbar a {
+    color: white;
+    text-decoration: none;
+    margin: 0 15px;
+    font-size: 16px;
+    transition: color 0.3s;
+  }
+  
+  .navbar a:hover {
+    color: #cc7b19;
+  }
+  
+  .navbar button {
+    background-color: #cc7b19;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s;
+  }
+  
+  .navbar button:hover {
+    background-color: #a66315;
+  }
+  
+  /* 🎯 Styles de la Search Bar */
+  .search-bar {
+    display: flex;
+    align-items: center;
+    background: white;
+    border-radius: 20px;
+    padding: 5px;
+    width: 40%;
+  }
+  
+  .search-bar input {
+    border: none;
+    outline: none;
+    padding: 8px 12px;
+    font-size: 14px;
+    width: 100%;
+  }
+  
+  .search-bar button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 18px;
+    color: #cc7b19;
+  }
+  
+  /* Responsive */
+  @media screen and (max-width: 768px) {
+    .navbar {
+      flex-direction: column;
+      text-align: center;
+    }
+  
+    .search-bar {
+      width: 90%;
+      margin-top: 10px;
+    }
+  
+    .navbar a, .navbar button {
+      margin-top: 5px;
+    }
+  }
+  

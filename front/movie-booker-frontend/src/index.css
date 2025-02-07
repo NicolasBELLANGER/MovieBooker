@@ -4,7 +4,11 @@
   text-align: center;
   font-family: Arial;
 }
-
+h1{
+  margin-top: 50px;
+  color: white;
+  text-align: left;
+}
 .movie-list {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));

@@ -1,0 +1,44 @@
+.search-bar {
+    display: flex;
+    align-items: center;
+    width: 50%;
+    height: 40px; /* Hauteur uniforme */
+    background: white;
+    border-radius: 20px;
+    border: 1px solid #ccc;
+    overflow: hidden; /* Empêche les débordements */
+  }
+  
+  .search-bar input {
+    flex: 1; /* Prend tout l'espace disponible */
+    padding: 10px;
+    border: none;
+    outline: none;
+    font-size: 16px;
+    height: 100%; /* Même hauteur que le parent */
+  }
+  
+  .search-bar button {
+    width: 50px; /* Taille carrée pour bien centrer l'icône */
+    height: 100%; /* Même hauteur que l'input */
+    background-color: #cc7b19;
+    color: white;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+  }
+  
+  .search-bar button:hover {
+    background-color: #a66315;
+  }
+  
+  /* Responsive */
+  @media screen and (max-width: 768px) {
+    .search-bar {
+      width: 90%;
+    }
+  }
+  

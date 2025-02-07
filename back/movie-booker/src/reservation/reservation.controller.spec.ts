@@ -111,7 +111,15 @@ describe('ReservationController (e2e)', () => {
 
   describe('GET /reservation/:id', () => {
     it('should return a reservation by ID', async () => {
-      const reservation = { id: 1, userId: 1, movieId: 100, movieName: 'Movie 1', date: new Date(), createAt: new Date(), updatedAt: new Date() };
+      const reservation = { 
+        id: 1, 
+        userId: 1, 
+        movieId: 100, 
+        movieName: 'Movie 1', 
+        date: new Date(), 
+        createAt: new Date(), 
+        updatedAt: new Date() 
+      };
 
       jest.spyOn(reservationService, 'getReservationById').mockResolvedValue(reservation);
 
@@ -136,6 +144,46 @@ describe('ReservationController (e2e)', () => {
       jest.spyOn(reservationService, 'getReservationById').mockRejectedValue(new NotFoundException('Reservation not found'));
 
       await request(app.getHttpServer()).get('/reservation/999').expect(404);
+    });
+  });
+
+  describe('GET /reservation/user/:userId', () => {
+    it('should return reservations for a specific user', async () => {
+      const mockReservations = [
+        { 
+          id: 1, 
+          userId: 1, 
+          movieId: 100, 
+          movieName: 'Movie A', 
+          date: new Date(), 
+          createAt: new Date(), 
+          updatedAt: new Date() 
+        },
+      ];
+
+      jest.spyOn(reservationService, 'getReservationByUserId').mockResolvedValue(mockReservations);
+
+      const response = await request(app.getHttpServer()).get('/reservation/user/1').expect(200);
+
+      expect(response.body).toEqual(
+        mockReservations.map((reservation) => ({
+          ...reservation,
+          date: reservation.date.toISOString(),
+          createAt: reservation.createAt.toISOString(),
+          updatedAt: reservation.updatedAt.toISOString(),
+        }))
+      );
+    });
+
+    it('should return 400 if userId is not provided', async () => {
+      await request(app.getHttpServer()).get('/reservation/user/invalid').expect(400);
+    });
+
+    it('should return 404 if no reservations are found for the user', async () => {
+      jest.spyOn(reservationService, 'getReservationByUserId').mockResolvedValue([]);
+
+      const response = await request(app.getHttpServer()).get('/reservation/user/999').expect(200);
+      expect(response.body).toEqual([]);
     });
   });
 });

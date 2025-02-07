@@ -33,6 +33,17 @@ export class ReservationService {
         return this.prisma.reservation.findMany();
     }
 
+    async getReservationByUserId(userId : number){
+        if(!userId){
+            throw new BadRequestException('UserId is required')
+        }
+        return this.prisma.reservation.findMany({
+            where : {
+                userId : userId,
+            }
+        })
+    }
+
     async getReservationById(reservationId : number){
         if(!reservationId){
             throw new BadRequestException('ReservationId is required')

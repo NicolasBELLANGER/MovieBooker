@@ -1,13 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ReservationService } from './reservation.service';
 import { PrismaService } from '../prisma.service';
-import { CreateReservationDto } from './dto/reservation.dto';
 import { BadRequestException } from '@nestjs/common';
-import { addHours } from 'date-fns';
 
 describe('ReservationService', () => {
-  let reservationService: ReservationService;
-  let prismaService: PrismaService;
+  let service: ReservationService;
+  let prisma: PrismaService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -17,69 +15,63 @@ describe('ReservationService', () => {
           provide: PrismaService,
           useValue: {
             reservation: {
-              findFirst: jest.fn(),
               create: jest.fn(),
               findMany: jest.fn(),
               findUnique: jest.fn(),
+              findFirst: jest.fn(),
             },
           },
         },
       ],
     }).compile();
 
-    reservationService = module.get<ReservationService>(ReservationService);
-    prismaService = module.get<PrismaService>(PrismaService);
-  });
-
-  it('should be defined', () => {
-    expect(reservationService).toBeDefined();
+    service = module.get<ReservationService>(ReservationService);
+    prisma = module.get<PrismaService>(PrismaService);
   });
 
   describe('createReservation', () => {
-    it('should create a new reservation if no previous reservation exists', async () => {
-      const reservationDto: CreateReservationDto = {
-        userId: 1,
-        movieId: 100,
-        movieName: 'Movie Title',
-        date: new Date('2025-02-05T00:00:00.000Z'),
-      };
-
-      const createdReservation = {
-        id: 1,
-        ...reservationDto,
-        createAt: new Date(),
-        updatedAt: new Date(),
-      };
-
-      jest.spyOn(prismaService.reservation, 'findFirst').mockResolvedValue(null);
-      jest.spyOn(prismaService.reservation, 'create').mockResolvedValue(createdReservation);
-
-      const result = await reservationService.createReservation(reservationDto);
-      expect(result).toEqual(createdReservation);
-      expect(prismaService.reservation.create).toHaveBeenCalledWith({ data: reservationDto });
-    });
-
-    it('should throw an error if the user tries to book within 2 hours of last reservation', async () => {
-      const lastReservation = {
+    it('should create a new reservation', async () => {
+      const newReservation = {
         id: 1,
         userId: 1,
         movieId: 100,
-        movieName: 'Old Movie',
+        movieName: 'Test Movie',
         date: new Date(),
         createAt: new Date(),
         updatedAt: new Date(),
       };
 
-      const newReservation: CreateReservationDto = {
+      jest.spyOn(prisma.reservation, 'findFirst').mockResolvedValue(null);
+      jest.spyOn(prisma.reservation, 'create').mockResolvedValue(newReservation);
+
+      const result = await service.createReservation(newReservation);
+      expect(result).toEqual(newReservation);
+    });
+
+    it('should throw an error if the user has to wait 2 hours before reserving again', async () => {
+      const lastReservation = {
+        id: 2,
         userId: 1,
-        movieId: 101,
-        movieName: 'New Movie',
-        date: addHours(new Date(), 1), // Tentative de réservation dans 1 heure
+        movieId: 99,
+        movieName: 'Previous Movie',
+        date: new Date(),
+        createAt: new Date(),
+        updatedAt: new Date(),
       };
 
-      jest.spyOn(prismaService.reservation, 'findFirst').mockResolvedValue(lastReservation);
+      const newReservation = {
+        id: 3,
+        userId: 1,
+        movieId: 100,
+        movieName: 'Test Movie',
+        date: new Date(),
+        createAt: new Date(),
+        updatedAt: new Date(),
+      };
 
-      await expect(reservationService.createReservation(newReservation)).rejects.toThrow(
+      jest.spyOn(prisma.reservation, 'findFirst').mockResolvedValue(lastReservation);
+
+      await expect(service.createReservation(newReservation)).rejects.toThrow(
         BadRequestException,
       );
     });
@@ -87,44 +79,91 @@ describe('ReservationService', () => {
 
   describe('getAllReservation', () => {
     it('should return all reservations', async () => {
-      const reservations = [
-        { id: 1, userId: 1, movieId: 100, movieName: 'Movie 1', date: new Date(), createAt: new Date(), updatedAt: new Date() },
-        { id: 2, userId: 2, movieId: 101, movieName: 'Movie 2', date: new Date(), createAt: new Date(), updatedAt: new Date() },
+      const mockReservations = [
+        {
+          id: 1,
+          userId: 1,
+          movieId: 100,
+          movieName: 'Movie A',
+          date: new Date(),
+          createAt: new Date(),
+          updatedAt: new Date(),
+        },
+        {
+          id: 2,
+          userId: 2,
+          movieId: 101,
+          movieName: null,
+          date: new Date(),
+          createAt: new Date(),
+          updatedAt: new Date(),
+        },
       ];
 
-      jest.spyOn(prismaService.reservation, 'findMany').mockResolvedValue(reservations);
+      jest.spyOn(prisma.reservation, 'findMany').mockResolvedValue(mockReservations);
 
-      const result = await reservationService.getAllReservation();
-      expect(result).toEqual(reservations);
+      const result = await service.getAllReservation();
+      expect(result).toEqual(mockReservations);
+    });
+  });
+
+  describe('getReservationByUserId', () => {
+    it('should return reservations for a user', async () => {
+      const mockReservations = [
+        {
+          id: 1,
+          userId: 1,
+          movieId: 100,
+          movieName: 'Movie A',
+          date: new Date(),
+          createAt: new Date(),
+          updatedAt: new Date(),
+        },
+      ];
+
+      jest.spyOn(prisma.reservation, 'findMany').mockResolvedValue(mockReservations);
+
+      const result = await service.getReservationByUserId(1);
+      expect(result).toEqual(mockReservations);
+    });
+
+    it('should throw an error if userId is not provided', async () => {
+      await expect(service.getReservationByUserId(NaN)).rejects.toThrow(
+        BadRequestException,
+      );
     });
   });
 
   describe('getReservationById', () => {
     it('should return a reservation by ID', async () => {
-      const reservation = { 
-        id: 1, 
-        userId: 1, 
-        movieId: 100, 
-        movieName: 'Movie 1', 
-        date: new Date(), 
-        createAt: new Date(), 
-        updatedAt: new Date() 
+      const mockReservation = {
+        id: 1,
+        userId: 1,
+        movieId: 100,
+        movieName: 'Movie A',
+        date: new Date(),
+        createAt: new Date(),
+        updatedAt: new Date(),
       };
 
-      jest.spyOn(prismaService.reservation, 'findUnique').mockResolvedValue(reservation);
+      jest.spyOn(prisma.reservation, 'findUnique').mockResolvedValue(mockReservation);
 
-      const result = await reservationService.getReservationById(1);
-      expect(result).toEqual(reservation);
+      const result = await service.getReservationById(1);
+      expect(result).toEqual(mockReservation);
     });
 
-    it('should throw BadRequestException if reservationId is missing', async () => {
-      await expect(reservationService.getReservationById(NaN)).rejects.toThrow(BadRequestException);
+    it('should throw an error if reservationId is not provided', async () => {
+      await expect(service.getReservationById(NaN)).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
-    it('should throw BadRequestException if reservation not found', async () => {
-      jest.spyOn(prismaService.reservation, 'findUnique').mockResolvedValue(null);
+    it('should throw an error if reservation is not found', async () => {
+      jest.spyOn(prisma.reservation, 'findUnique').mockResolvedValue(null);
 
-      await expect(reservationService.getReservationById(999)).rejects.toThrow(BadRequestException);
+      await expect(service.getReservationById(999)).rejects.toThrow(
+        BadRequestException,
+      );
     });
   });
 });

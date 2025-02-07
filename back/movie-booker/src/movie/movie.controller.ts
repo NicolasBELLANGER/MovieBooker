@@ -22,4 +22,12 @@ export class MovieController {
     async getMoviesByName(@Query() params: {name: string}){
         return this.moviesService.getMovieByName(params.name);
     }
+
+    @UseGuards(AuthGuard)
+    @Get(':id')
+    @ApiBearerAuth()
+    async getMovieById(@Param('id') id: string){
+        const MovieId = Number(id);
+        return this.moviesService.getMovieById(MovieId);
+    }
 }

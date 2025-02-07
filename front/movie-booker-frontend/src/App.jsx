@@ -20,7 +20,7 @@ const App = () => {
   return (
     <div className="container">
       <Navbar isAuthenticated={isAuthenticated} onLogout={logout} onSearch={handleSearch} />
-      <h1>Films Populaires 🎬</h1>
+      <h1>Films populaires 🎬</h1>
 
       {error && <p className="error-message">❌ {error}</p>}
 

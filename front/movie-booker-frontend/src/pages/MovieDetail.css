@@ -1,0 +1,29 @@
+.movie-detail {
+    text-align: center;
+    padding: 20px;
+  }
+  
+  .movie-detail img {
+    width: 300px;
+    border-radius: 10px;
+    margin: 10px 0;
+  }
+  
+  .movie-detail p {
+    font-size: 18px;
+  }
+  
+  .back-button {
+    background-color: #cc7b19;
+    color: white;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+  }
+  
+  .back-button:hover {
+    background-color: #a66315;
+  }
+  

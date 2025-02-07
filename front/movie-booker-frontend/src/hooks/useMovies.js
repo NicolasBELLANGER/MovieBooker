@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-const API_BASE_URL = "http://localhost:3000/movie";
+const API_BASE_URL = "https://moviebooker-back.onrender.com/movie";
 
 const useMovies = (isAuthenticated, page, query) => {
   const [movies, setMovies] = useState([]);

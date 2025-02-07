@@ -1,0 +1,17 @@
+.movie-link {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-decoration: none; /* ✅ Supprime le soulignement */
+  }
+  
+  .movie-title {
+    color: black !important; /* ✅ Forcer la visibilité */
+    font-size: 16px;
+    text-align: center;
+    margin-top: 10px;
+  }
+  .movie-list h3{
+    color: black;
+  }
+  

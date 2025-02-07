@@ -1,23 +1,28 @@
+import { Link } from "react-router-dom";
+import "./MovieList.css";
 const MovieList = ({ movies }) => {
-    if (!movies || movies.length === 0) {
-      return <p>Aucun film disponible.</p>;
-    }
-  
-    return (
-      <div className="movie-list">
-        {movies.map((movie) => (
+  console.log("🎬 Films reçus :", movies); // Debug
+
+  return (
+    <div className="movie-list">
+      {movies.length > 0 ? (
+        movies.map((movie) => (
           <div key={movie.id} className="movie-card">
-            <img 
-              src={`https://image.tmdb.org/t/p/w500${movie.poster_path}`} 
-              alt={movie.title} 
-              className="movie-poster"
-            />
-            <h3>{movie.title} ({movie.release_date.substring(0, 4)})</h3>
+            <Link to={`/movie/${movie.id}`} className="movie-link">
+              <img 
+                src={movie.poster_path ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` : "/placeholder.jpg"} 
+                alt={movie.title || "Aucun titre"} 
+                className="movie-poster"
+              />
+              <h3>{movie.title ? movie.title : "Titre indisponible"}</h3>
+            </Link>
           </div>
-        ))}
-      </div>
-    );
-  };
-  
-  export default MovieList;
-  
+        ))
+      ) : (
+        <p className="no-results">Aucun film trouvé.</p>
+      )}
+    </div>
+  );
+};
+
+export default MovieList;
